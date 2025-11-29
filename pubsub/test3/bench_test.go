@@ -274,3 +274,70 @@ func Benchmark_HighLoad_FanOut_Burst(b *testing.B) {
 	b.StopTimer()
 	consumersWg.Wait()
 }
+
+// Benchmark_HighLoad_FanOut_Burst_Backpressure simulates high-throughput broadcasting
+// with strict backpressure (BlockPublishUntilSubscriberAck: true).
+func Benchmark_HighLoad_FanOut_Burst_Backpressure(b *testing.B) {
+	const (
+		payloadSize     = 1024
+		msgsPerOp       = 100_000
+		subscriberCount = 8
+	)
+
+	pubSub := memchan.NewGoChannel(
+		memchan.Config{
+			OutputChannelBuffer:            0,
+			BlockPublishUntilSubscriberAck: true,
+		},
+		watermill.NopLogger{},
+	)
+	defer pubSub.Close()
+
+	topic := "high_load_burst_backpressure_topic"
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Setup Subscribers
+	for i := 0; i < subscriberCount; i++ {
+		msgs, err := pubSub.Subscribe(ctx, topic)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		go func(workerID int) {
+			for msg := range msgs {
+				if len(msg.Payload) == 0 {
+					panic("empty payload received")
+				}
+				msg.Ack()
+			}
+		}(i)
+	}
+
+	b.SetBytes(int64(payloadSize * msgsPerOp))
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		templateData := make([]byte, payloadSize)
+		rnd := rand.NewChaCha8([32]byte{byte(time.Now().UnixNano())})
+		_, _ = rnd.Read(templateData)
+
+		for pb.Next() {
+			for i := 0; i < msgsPerOp; i++ {
+				payload := make([]byte, payloadSize)
+				copy(payload, templateData)
+
+				msg := message.NewMessage(watermill.NewUUID(), payload)
+				msg.Metadata.Set("ts", strconv.FormatInt(time.Now().UnixNano(), 10))
+				msg.Metadata.Set("type", "burst_test")
+
+				if err := pubSub.Publish(topic, msg); err != nil {
+					b.Fatal(err)
+				}
+			}
+		}
+	})
+
+	b.StopTimer()
+}
