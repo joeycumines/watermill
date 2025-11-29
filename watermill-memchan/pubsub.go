@@ -482,7 +482,9 @@ func (s *subscriber) consumeFromChanPubSub(ctx context.Context, g *GoChannel, to
 }
 
 // processMessageFromChanPubSub handles a message with Ack/Nack retry logic
-func (s *subscriber) processMessageFromChanPubSub(msg *message.Message, logFields watermill.LogFields) {
+// sendMessageWithAckHandling handles message delivery with Ack/Nack retry logic.
+// This is the core message handling logic used by both ChanPubSub mode and traditional mode.
+func (s *subscriber) sendMessageWithAckHandling(msg *message.Message, logFields watermill.LogFields) {
 	ctx := msg.Context()
 
 	if !s.preserveContext {
@@ -529,49 +531,12 @@ SendToSubscriber:
 	}
 }
 
+// processMessageFromChanPubSub handles a message received from ChanPubSub
+func (s *subscriber) processMessageFromChanPubSub(msg *message.Message, logFields watermill.LogFields) {
+	s.sendMessageWithAckHandling(msg, logFields)
+}
+
+// sendMessageToSubscriber sends a message to the subscriber (traditional mode)
 func (s *subscriber) sendMessageToSubscriber(msg *message.Message, logFields watermill.LogFields) {
-	ctx := msg.Context()
-
-	if !s.preserveContext {
-		var cancelCtx context.CancelFunc
-		ctx, cancelCtx = context.WithCancel(s.ctx)
-		defer cancelCtx()
-	}
-
-SendToSubscriber:
-	for {
-		msgToSend := msg.Copy()
-		msgToSend.SetContext(ctx)
-
-		s.logger.Trace("Sending msg to subscriber", logFields)
-
-		s.sending.Lock()
-		if s.closed {
-			s.logger.Info("Pub/Sub closed, discarding msg", logFields)
-			s.sending.Unlock()
-			return
-		}
-
-		select {
-		case s.outputChannel <- msgToSend:
-			s.logger.Trace("Sent message to subscriber", logFields)
-		case <-s.closing:
-			s.logger.Trace("Closing, message discarded", logFields)
-			s.sending.Unlock()
-			return
-		}
-		s.sending.Unlock()
-
-		select {
-		case <-msgToSend.Acked():
-			s.logger.Trace("Message acked", logFields)
-			return
-		case <-msgToSend.Nacked():
-			s.logger.Trace("Nack received, resending message", logFields)
-			continue SendToSubscriber
-		case <-s.closing:
-			s.logger.Trace("Closing, message discarded", logFields)
-			return
-		}
-	}
+	s.sendMessageWithAckHandling(msg, logFields)
 }

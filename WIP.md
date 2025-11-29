@@ -16,7 +16,7 @@ Implement `github.com/joeycumines/watermill-memchan` as a separate module using 
 - [x] Create README.md with benchmark results and documentation
 - [x] Investigate external watermill-benchmark repo (not applicable - designed for external services)
 - [x] Update watermill docs (awesome.md) to mention memchan alternative
-- [ ] Code review and final verification
+- [x] Code review and refactoring (reduced code duplication)
 
 ## Progress Log
 - Analyzed benchmark results from test1/test2 showing ChanPubSub performance benefits
@@ -25,3 +25,4 @@ Implement `github.com/joeycumines/watermill-memchan` as a separate module using 
 - All tests passing with race detector
 - Created comprehensive README.md with benchmarks and documentation
 - Added memchan to docs/content/docs/awesome.md
+- Refactored duplicate message handling code into sendMessageWithAckHandling
