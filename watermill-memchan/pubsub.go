@@ -232,27 +232,29 @@ func (s *subscriber) blockingReceiver() {
 	psCh := ps.C()
 
 	for msg := range psCh {
-		// Forward and handle Ack with retry
-	sendLoop:
-		for {
-			select {
-			case out <- msg:
-			case <-s.closing:
-				ps.Wait()
-				return
-			}
-			
-			select {
-			case <-msg.Acked():
-				ps.Wait()
-				break sendLoop
-			case <-msg.Nacked():
-				msg = msg.Copy()
-				continue sendLoop
-			case <-s.closing:
-				ps.Wait()
-				return
-			}
+		s.processBlockingMessage(msg, ps, out)
+	}
+}
+
+// processBlockingMessage handles a single message with Nack retry support
+func (s *subscriber) processBlockingMessage(msg *message.Message, ps *bigbuff.ChanPubSub[chan *message.Message, *message.Message], out chan *message.Message) {
+	for {
+		select {
+		case out <- msg:
+		case <-s.closing:
+			ps.Wait()
+			return
+		}
+
+		select {
+		case <-msg.Acked():
+			ps.Wait()
+			return
+		case <-msg.Nacked():
+			msg = msg.Copy()
+		case <-s.closing:
+			ps.Wait()
+			return
 		}
 	}
 }
