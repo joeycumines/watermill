@@ -1,0 +1,61 @@
+goos: darwin
+goarch: arm64
+pkg: test2
+cpu: Apple M2 Pro
+Benchmark_highContention-10    	       6	 203765514 ns/op	    2368 B/op	      24 allocs/op
+--- BENCH: Benchmark_highContention-10
+    bench_test.go:69: publishing 1 messages
+    bench_test.go:91: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:69: publishing 6 messages
+    bench_test.go:91: closing, received 900000 messages total across 150000 consumers
+Benchmark_highContention-10    	       6	 209685778 ns/op	    2928 B/op	      30 allocs/op
+--- BENCH: Benchmark_highContention-10
+    bench_test.go:69: publishing 1 messages
+    bench_test.go:91: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:69: publishing 6 messages
+    bench_test.go:91: closing, received 900000 messages total across 150000 consumers
+Benchmark_highContention-10    	       6	 211075660 ns/op	     848 B/op	       8 allocs/op
+--- BENCH: Benchmark_highContention-10
+    bench_test.go:69: publishing 1 messages
+    bench_test.go:91: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:69: publishing 6 messages
+    bench_test.go:91: closing, received 900000 messages total across 150000 consumers
+Benchmark_highContention-10    	       6	 228215465 ns/op	    2624 B/op	      27 allocs/op
+--- BENCH: Benchmark_highContention-10
+    bench_test.go:69: publishing 1 messages
+    bench_test.go:91: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:69: publishing 6 messages
+    bench_test.go:91: closing, received 900000 messages total across 150000 consumers
+Benchmark_highContention-10    	       5	 209803500 ns/op	    2707 B/op	      28 allocs/op
+--- BENCH: Benchmark_highContention-10
+    bench_test.go:69: publishing 1 messages
+    bench_test.go:91: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:69: publishing 4 messages
+    bench_test.go:91: closing, received 600000 messages total across 150000 consumers
+    bench_test.go:69: publishing 5 messages
+    bench_test.go:91: closing, received 750000 messages total across 150000 consumers
+Benchmark_highContention-10    	       6	 216972514 ns/op	    2736 B/op	      28 allocs/op
+--- BENCH: Benchmark_highContention-10
+    bench_test.go:69: publishing 1 messages
+    bench_test.go:91: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:69: publishing 6 messages
+    bench_test.go:91: closing, received 900000 messages total across 150000 consumers
+PASS
+       11.95 real        25.75 user        12.61 sys
+           412286976  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               25389  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                 802  signals received
+                 395  voluntary context switches
+             2750479  involuntary context switches
+         89797296985  instructions retired
+        114148684443  cycles elapsed
+           409174784  peak memory footprint

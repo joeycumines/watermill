@@ -1,0 +1,20 @@
+2025/11/29 11:02:23 publishing 9 messages
+2025/11/29 11:02:27 closing, received 1350000 messages total across 150000 consumers
+        8.57 real        19.00 user         4.47 sys
+          1462845440  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               89626  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                 612  signals received
+                 384  voluntary context switches
+              983345  involuntary context switches
+        135011319515  instructions retired
+         68503394724  cycles elapsed
+          1461798376  peak memory footprint
