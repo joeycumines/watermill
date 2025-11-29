@@ -225,55 +225,34 @@ func (g *GoChannel) Subscribe(ctx context.Context, topicName string) (<-chan *me
 }
 
 // blockingReceiver - hot path for BlockPublishUntilSubscriberAck mode
+// Optimized for minimal overhead
 func (s *subscriber) blockingReceiver() {
 	ps := s.topic.pubSub
 	out := s.outputChannel
-	closing := s.closing
-	gClosing := s.gochannel.closing
+	psCh := ps.C()
 
-	for {
-		select {
-		case <-closing:
-			return
-		case <-gClosing:
-			return
-		case msg, ok := <-ps.C():
-			if !ok {
+	for msg := range psCh {
+		// Forward and handle Ack with retry
+	sendLoop:
+		for {
+			select {
+			case out <- msg:
+			case <-s.closing:
+				ps.Wait()
 				return
 			}
-
-			// Forward and handle Ack/Nack with retry
-			s.forwardWithAck(msg, ps, out, closing, gClosing)
-		}
-	}
-}
-
-// forwardWithAck handles message forwarding with Nack retry support
-func (s *subscriber) forwardWithAck(msg *message.Message, ps *bigbuff.ChanPubSub[chan *message.Message, *message.Message], out chan *message.Message, closing, gClosing chan struct{}) {
-	for {
-		select {
-		case out <- msg:
-		case <-closing:
-			ps.Wait()
-			return
-		case <-gClosing:
-			ps.Wait()
-			return
-		}
-
-		select {
-		case <-msg.Acked():
-			ps.Wait()
-			return
-		case <-msg.Nacked():
-			msg = msg.Copy()
-			continue
-		case <-closing:
-			ps.Wait()
-			return
-		case <-gClosing:
-			ps.Wait()
-			return
+			
+			select {
+			case <-msg.Acked():
+				ps.Wait()
+				break sendLoop
+			case <-msg.Nacked():
+				msg = msg.Copy()
+				continue sendLoop
+			case <-s.closing:
+				ps.Wait()
+				return
+			}
 		}
 	}
 }
