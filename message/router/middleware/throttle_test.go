@@ -50,7 +50,7 @@ func TestThrottle_Middleware(t *testing.T) {
 
 				select {
 				case <-ctx.Done():
-					break
+					return
 				default:
 				}
 			}

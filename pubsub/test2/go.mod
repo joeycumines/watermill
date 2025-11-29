@@ -3,7 +3,7 @@ module test2
 replace github.com/ThreeDotsLabs/watermill => ../..
 
 require (
-	github.com/ThreeDotsLabs/watermill v0.0.0-00010101000000-000000000000
+	github.com/ThreeDotsLabs/watermill v1.5.1
 	github.com/joeycumines/go-bigbuff v1.21.0
 )
 

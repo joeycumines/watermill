@@ -68,8 +68,7 @@ func main() {
 	}
 
 	countBefore := int(count.Load())
-	bmrInt += countBefore
-	log.Printf(`closing, received %d messages total across %d consumers`, countBefore, numReceivers)
+	log.Printf(`closing, received %d messages total across %d consumers (published %d)`, countBefore, numReceivers, bmrInt)
 
 	// 5. Teardown
 	// Closing the underlying channel signals the iterators in SubscribeContext to return,
