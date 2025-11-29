@@ -1,0 +1,8 @@
+goos: linux
+goarch: amd64
+pkg: test3
+cpu: AMD EPYC 7763 64-Core Processor                
+Benchmark_Production_EventBus_Buffered-4   	   53979	     32996 ns/op	   10409 B/op	     102 allocs/op
+Benchmark_Production_EventBus_Buffered-4   	   82996	     43096 ns/op	    9859 B/op	     103 allocs/op
+Benchmark_Production_EventBus_Buffered-4   	   75601	     23030 ns/op	    7914 B/op	      97 allocs/op
+PASS

@@ -25,6 +25,7 @@ If you know another library or are an author of one, please [add it to the list]
 * Apache RocketMQ https://github.com/yflau/watermill-rocketmq
 * CockroachDB https://github.com/cockroachdb/watermill-crdb
 * Ensign https://github.com/rotationalio/watermill-ensign
+* GoChannel (high-performance alternative) https://github.com/joeycumines/watermill-memchan
 * GoogleCloud Pub/Sub HTTP Push https://github.com/dentech-floss/watermill-googlecloud-http
 * MongoDB https://github.com/cunyat/watermill-mongodb
 * MQTT https://github.com/perfect13/watermill-mqtt
