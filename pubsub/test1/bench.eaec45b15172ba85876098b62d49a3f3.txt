@@ -1,0 +1,29 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/ThreeDotsLabs/watermill/pubsub/test1
+cpu: Apple M2 Pro
+Benchmark_HighLoad_FanOut_Burst-10    	       1	1845866625 ns/op	  55.48 MB/s	1068164072 B/op	 8039913 allocs/op
+Benchmark_HighLoad_FanOut_Burst-10    	       1	1491987334 ns/op	  68.63 MB/s	765663672 B/op	 7124643 allocs/op
+Benchmark_HighLoad_FanOut_Burst-10    	       1	1540235208 ns/op	  66.48 MB/s	794568856 B/op	 7267789 allocs/op
+Benchmark_HighLoad_FanOut_Burst-10    	       1	1546315375 ns/op	  66.22 MB/s	835043432 B/op	 7631845 allocs/op
+Benchmark_HighLoad_FanOut_Burst-10    	       1	1900884375 ns/op	  53.87 MB/s	830226792 B/op	 7651424 allocs/op
+Benchmark_HighLoad_FanOut_Burst-10    	       1	1612839541 ns/op	  63.49 MB/s	776013368 B/op	 7294961 allocs/op
+PASS
+       18.81 real        63.18 user        17.87 sys
+          2875817984  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+              180357  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                1583  signals received
+                1410  voluntary context switches
+             3500908  involuntary context switches
+        290079199007  instructions retired
+        240461534869  cycles elapsed
+          2874935792  peak memory footprint

@@ -1,0 +1,29 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/ThreeDotsLabs/watermill/pubsub/test1
+cpu: Apple M2 Pro
+Benchmark_Production_EventBus_Buffered-10    	   34408	     38964 ns/op	   11289 B/op	     106 allocs/op
+Benchmark_Production_EventBus_Buffered-10    	   40621	     34775 ns/op	    8678 B/op	     100 allocs/op
+Benchmark_Production_EventBus_Buffered-10    	   44395	     32449 ns/op	    8253 B/op	      99 allocs/op
+Benchmark_Production_EventBus_Buffered-10    	   45338	     34389 ns/op	    7746 B/op	      98 allocs/op
+Benchmark_Production_EventBus_Buffered-10    	   41760	     38947 ns/op	    7990 B/op	      98 allocs/op
+Benchmark_Production_EventBus_Buffered-10    	   40135	     34602 ns/op	    7624 B/op	      98 allocs/op
+PASS
+       11.83 real        40.50 user        11.37 sys
+          1593409536  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               97593  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                1330  signals received
+                1427  voluntary context switches
+             2153901  involuntary context switches
+        165001331362  instructions retired
+        154727062986  cycles elapsed
+          1591674464  peak memory footprint

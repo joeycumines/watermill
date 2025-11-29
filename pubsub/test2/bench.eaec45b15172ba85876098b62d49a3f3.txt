@@ -1,0 +1,29 @@
+goos: darwin
+goarch: arm64
+pkg: test2
+cpu: Apple M2 Pro
+Benchmark_HighLoad_FanOut_Burst-10    	       2	 977536334 ns/op	 104.75 MB/s	177009748 B/op	  901457 allocs/op
+Benchmark_HighLoad_FanOut_Burst-10    	       2	 956287146 ns/op	 107.08 MB/s	176976896 B/op	  901227 allocs/op
+Benchmark_HighLoad_FanOut_Burst-10    	       2	1107012229 ns/op	  92.50 MB/s	176980204 B/op	  901281 allocs/op
+Benchmark_HighLoad_FanOut_Burst-10    	       2	1027177208 ns/op	  99.69 MB/s	177022964 B/op	  901636 allocs/op
+Benchmark_HighLoad_FanOut_Burst-10    	       2	1020529229 ns/op	 100.34 MB/s	176994428 B/op	  901326 allocs/op
+Benchmark_HighLoad_FanOut_Burst-10    	       2	 958324916 ns/op	 106.85 MB/s	176963240 B/op	  901104 allocs/op
+PASS
+       17.90 real        21.66 user        14.07 sys
+            14123008  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                1070  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                9585  signals received
+                5025  voluntary context switches
+             4494007  involuntary context switches
+        156577716965  instructions retired
+         99691678179  cycles elapsed
+            11731448  peak memory footprint

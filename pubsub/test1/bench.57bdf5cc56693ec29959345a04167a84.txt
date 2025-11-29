@@ -1,0 +1,29 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/ThreeDotsLabs/watermill/pubsub/test1
+cpu: Apple M2 Pro
+Benchmark_Production_EventBus_StrictSync-10    	   90620	     26001 ns/op	    6860 B/op	      93 allocs/op
+Benchmark_Production_EventBus_StrictSync-10    	   96181	     12015 ns/op	    6856 B/op	      93 allocs/op
+Benchmark_Production_EventBus_StrictSync-10    	   94099	     12684 ns/op	    6856 B/op	      93 allocs/op
+Benchmark_Production_EventBus_StrictSync-10    	   93548	     15290 ns/op	    6856 B/op	      93 allocs/op
+Benchmark_Production_EventBus_StrictSync-10    	   83428	     14060 ns/op	    6856 B/op	      93 allocs/op
+Benchmark_Production_EventBus_StrictSync-10    	   96160	     12839 ns/op	    6856 B/op	      93 allocs/op
+PASS
+        9.45 real        13.92 user         4.80 sys
+            15040512  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                1122  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+               11451  signals received
+                5560  voluntary context switches
+             1542326  involuntary context switches
+        115684888117  instructions retired
+         52675331135  cycles elapsed
+            12632616  peak memory footprint

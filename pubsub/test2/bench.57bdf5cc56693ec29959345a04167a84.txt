@@ -1,0 +1,29 @@
+goos: darwin
+goarch: arm64
+pkg: test2
+cpu: Apple M2 Pro
+Benchmark_Production_EventBus_StrictSync-10    	  324252	      3731 ns/op	     432 B/op	       6 allocs/op
+Benchmark_Production_EventBus_StrictSync-10    	  319624	      3733 ns/op	     432 B/op	       6 allocs/op
+Benchmark_Production_EventBus_StrictSync-10    	  304856	      3657 ns/op	     432 B/op	       6 allocs/op
+Benchmark_Production_EventBus_StrictSync-10    	  309378	      3642 ns/op	     432 B/op	       6 allocs/op
+Benchmark_Production_EventBus_StrictSync-10    	  324279	      3610 ns/op	     432 B/op	       6 allocs/op
+Benchmark_Production_EventBus_StrictSync-10    	  371904	      3574 ns/op	     432 B/op	       6 allocs/op
+PASS
+        8.41 real        10.57 user         4.74 sys
+            13189120  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                1009  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                1449  signals received
+                 437  voluntary context switches
+             1810298  involuntary context switches
+         86870091433  instructions retired
+         42794067180  cycles elapsed
+            10945016  peak memory footprint
