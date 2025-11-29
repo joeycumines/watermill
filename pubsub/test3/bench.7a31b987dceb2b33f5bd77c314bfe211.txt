@@ -1,0 +1,37 @@
+goos: linux
+goarch: amd64
+pkg: test3
+cpu: AMD EPYC 7763 64-Core Processor                
+Benchmark_highContention-4   	       6	 243960785 ns/op	78590185 B/op	 1051702 allocs/op
+--- BENCH: Benchmark_highContention-4
+    bench_test.go:64: publishing 1 messages
+    bench_test.go:78: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:64: publishing 6 messages
+    bench_test.go:78: closing, received 900000 messages total across 150000 consumers
+Benchmark_highContention-4   	       6	 249067278 ns/op	78561332 B/op	 1052937 allocs/op
+--- BENCH: Benchmark_highContention-4
+    bench_test.go:64: publishing 1 messages
+    bench_test.go:78: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:64: publishing 2 messages
+    bench_test.go:78: closing, received 300000 messages total across 150000 consumers
+    bench_test.go:64: publishing 3 messages
+    bench_test.go:78: closing, received 450000 messages total across 150000 consumers
+    bench_test.go:64: publishing 4 messages
+    bench_test.go:78: closing, received 600000 messages total across 150000 consumers
+    bench_test.go:64: publishing 5 messages
+    bench_test.go:78: closing, received 750000 messages total across 150000 consumers
+	... [output truncated]
+Benchmark_highContention-4   	       6	 233934465 ns/op	78207846 B/op	 1051939 allocs/op
+--- BENCH: Benchmark_highContention-4
+    bench_test.go:64: publishing 1 messages
+    bench_test.go:78: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:64: publishing 2 messages
+    bench_test.go:78: closing, received 300000 messages total across 150000 consumers
+    bench_test.go:64: publishing 3 messages
+    bench_test.go:78: closing, received 450000 messages total across 150000 consumers
+    bench_test.go:64: publishing 4 messages
+    bench_test.go:78: closing, received 600000 messages total across 150000 consumers
+    bench_test.go:64: publishing 5 messages
+    bench_test.go:78: closing, received 750000 messages total across 150000 consumers
+	... [output truncated]
+PASS

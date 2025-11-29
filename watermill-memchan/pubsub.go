@@ -34,8 +34,11 @@ type Config struct {
 	PreserveContext bool
 }
 
-// GoChannel is a high-performance Pub/Sub implementation that uses go-bigbuff.
-// It is based on Golang's channels which are sent within the process.
+// GoChannel is a high-performance Pub/Sub implementation that uses go-bigbuff.ChanPubSub.
+// It provides the same API as github.com/ThreeDotsLabs/watermill/pubsub/gochannel.
+//
+// When BlockPublishUntilSubscriberAck is true, it leverages ChanPubSub for efficient
+// broadcasting to all subscribers. Otherwise, it uses a traditional per-subscriber model.
 //
 // GoChannel has no global state,
 // that means that you need to use the same instance for Publishing and Subscribing!
@@ -57,17 +60,18 @@ type GoChannel struct {
 	persistedMessages     map[string][]*message.Message
 	persistedMessagesLock sync.RWMutex
 
-	// Internal pubsub per topic for non-BlockPublishUntilSubscriberAck mode
-	topicPubSubs     map[string]*topicPubSub
-	topicPubSubsLock sync.Mutex
+	// ChanPubSub per topic for BlockPublishUntilSubscriberAck mode
+	topicBuses     map[string]*topicBus
+	topicBusesLock sync.RWMutex
 }
 
-// topicPubSub holds the bigbuff.ChanPubSub and its underlying channel for a topic
-type topicPubSub struct {
-	pubSub *bigbuff.ChanPubSub[chan *message.Message, *message.Message]
-	ch     chan *message.Message
-	closed bool
-	mu     sync.Mutex
+// topicBus holds ChanPubSub for a topic (used in BlockPublishUntilSubscriberAck mode)
+type topicBus struct {
+	pubSub     *bigbuff.ChanPubSub[chan *message.Message, *message.Message]
+	ch         chan *message.Message
+	closed     bool
+	closedOnce sync.Once
+	mu         sync.Mutex
 }
 
 // NewGoChannel creates new GoChannel Pub/Sub.
@@ -93,8 +97,33 @@ func NewGoChannel(config Config, logger watermill.LoggerAdapter) *GoChannel {
 		closing: make(chan struct{}),
 
 		persistedMessages: map[string][]*message.Message{},
-		topicPubSubs:      make(map[string]*topicPubSub),
+		topicBuses:        make(map[string]*topicBus),
 	}
+}
+
+// getOrCreateTopicBus gets or creates a topic bus for BlockPublishUntilSubscriberAck mode
+func (g *GoChannel) getOrCreateTopicBus(topic string) *topicBus {
+	g.topicBusesLock.RLock()
+	bus, ok := g.topicBuses[topic]
+	g.topicBusesLock.RUnlock()
+	if ok {
+		return bus
+	}
+
+	g.topicBusesLock.Lock()
+	defer g.topicBusesLock.Unlock()
+
+	if bus, ok = g.topicBuses[topic]; ok {
+		return bus
+	}
+
+	ch := make(chan *message.Message)
+	bus = &topicBus{
+		pubSub: bigbuff.NewChanPubSub(ch),
+		ch:     ch,
+	}
+	g.topicBuses[topic] = bus
+	return bus
 }
 
 // Publish in GoChannel is NOT blocking until all consumers consume.
@@ -138,29 +167,47 @@ func (g *GoChannel) Publish(topic string, messages ...*message.Message) error {
 	for i := range messagesToPublish {
 		msg := messagesToPublish[i]
 
-		ackedBySubscribers, err := g.sendMessage(topic, msg)
-		if err != nil {
-			return err
-		}
-
 		if g.config.BlockPublishUntilSubscriberAck {
-			g.waitForAckFromSubscribers(msg, ackedBySubscribers)
+			// Use ChanPubSub for efficient blocking broadcast
+			g.publishWithChanPubSub(topic, msg)
+		} else {
+			// Use traditional per-subscriber sending
+			ackedBySubscribers, err := g.sendMessage(topic, msg)
+			if err != nil {
+				return err
+			}
+			// Don't wait for ack in non-blocking mode
+			_ = ackedBySubscribers
 		}
 	}
 
 	return nil
 }
 
-func (g *GoChannel) waitForAckFromSubscribers(msg *message.Message, ackedByConsumer <-chan struct{}) {
-	logFields := watermill.LogFields{"message_uuid": msg.UUID}
-	g.logger.Debug("Waiting for subscribers ack", logFields)
+// publishWithChanPubSub uses ChanPubSub for efficient blocking broadcast
+func (g *GoChannel) publishWithChanPubSub(topic string, msg *message.Message) {
+	logFields := watermill.LogFields{"message_uuid": msg.UUID, "topic": topic}
 
-	select {
-	case <-ackedByConsumer:
-		g.logger.Trace("Message acked by subscribers", logFields)
-	case <-g.closing:
-		g.logger.Trace("Closing Pub/Sub before ack from subscribers", logFields)
+	subscribers := g.topicSubscribers(topic)
+	if len(subscribers) == 0 {
+		g.logger.Info("No subscribers to send message", logFields)
+		return
 	}
+
+	bus := g.getOrCreateTopicBus(topic)
+
+	// Send via ChanPubSub - this blocks until all subscribers call Wait()
+	sent := bus.pubSub.Send(msg)
+
+	if sent != len(subscribers) {
+		g.logger.Debug("Subscriber count mismatch", watermill.LogFields{
+			"message_uuid": msg.UUID,
+			"expected":     len(subscribers),
+			"sent":         sent,
+		})
+	}
+
+	g.logger.Trace("Message sent via ChanPubSub", logFields)
 }
 
 func (g *GoChannel) sendMessage(topic string, message *message.Message) (<-chan struct{}, error) {
@@ -222,6 +269,17 @@ func (g *GoChannel) Subscribe(ctx context.Context, topic string) (<-chan *messag
 		logger:          g.logger,
 		closing:         make(chan struct{}),
 		preserveContext: g.config.PreserveContext,
+		blockOnAck:      g.config.BlockPublishUntilSubscriberAck,
+	}
+
+	// If using BlockPublishUntilSubscriberAck, register with ChanPubSub
+	if g.config.BlockPublishUntilSubscriberAck {
+		bus := g.getOrCreateTopicBus(topic)
+		bus.pubSub.Subscribe()
+		s.topicBus = bus
+
+		// Start the ChanPubSub consumer goroutine
+		go s.consumeFromChanPubSub(ctx, g, topic)
 	}
 
 	go func(s *subscriber, g *GoChannel) {
@@ -292,12 +350,6 @@ func (g *GoChannel) removeSubscriber(topic string, toRemove *subscriber) {
 			removed = true
 
 			if len(g.subscribers[topic]) == 0 && !g.config.Persistent {
-				// Free up the memory taken by a topic which no longer has subscribers.
-				// This operation allows publishing and subscribing to narrowly
-				// focused topics that include random data like UUIDs in topic name.
-				//
-				// Without this operation, memory usage will grow indefinitely in a long-running service
-				// as the map grows larger and larger with keys pointing to empty slices.
 				delete(g.subscribers, topic)
 				g.subscribersByTopicLock.Delete(topic)
 			}
@@ -307,6 +359,11 @@ func (g *GoChannel) removeSubscriber(topic string, toRemove *subscriber) {
 	if !removed {
 		panic("cannot remove subscriber, not found " + toRemove.uuid)
 	}
+
+	// Unsubscribe from ChanPubSub if applicable
+	if toRemove.topicBus != nil {
+		toRemove.topicBus.pubSub.Unsubscribe()
+	}
 }
 
 func (g *GoChannel) topicSubscribers(topic string) []*subscriber {
@@ -315,7 +372,6 @@ func (g *GoChannel) topicSubscribers(topic string) []*subscriber {
 		return nil
 	}
 
-	// let's do a copy to avoid race conditions and deadlocks due to lock
 	subscribersCopy := make([]*subscriber, len(subscribers))
 	copy(subscribersCopy, subscribers)
 
@@ -342,23 +398,21 @@ func (g *GoChannel) Close() error {
 	close(g.closing)
 
 	g.logger.Debug("Closing Pub/Sub, waiting for subscribers", nil)
+
+	// Close all ChanPubSub channels
+	g.topicBusesLock.Lock()
+	for _, bus := range g.topicBuses {
+		bus.closedOnce.Do(func() {
+			bus.closed = true
+			close(bus.ch)
+		})
+	}
+	g.topicBusesLock.Unlock()
+
 	g.subscribersWg.Wait()
 
 	g.logger.Info("Pub/Sub closed", nil)
 	g.persistedMessages = nil
-
-	// Close all topic pubsubs
-	g.topicPubSubsLock.Lock()
-	for _, tps := range g.topicPubSubs {
-		tps.mu.Lock()
-		if !tps.closed {
-			tps.closed = true
-			close(tps.ch)
-		}
-		tps.mu.Unlock()
-	}
-	g.topicPubSubs = nil
-	g.topicPubSubsLock.Unlock()
 
 	return nil
 }
@@ -376,6 +430,10 @@ type subscriber struct {
 	closing chan struct{}
 
 	preserveContext bool
+	blockOnAck      bool
+
+	// For BlockPublishUntilSubscriberAck mode
+	topicBus *topicBus
 }
 
 func (s *subscriber) Close() {
@@ -386,7 +444,6 @@ func (s *subscriber) Close() {
 
 	s.logger.Debug("Closing subscriber, waiting for sending lock", nil)
 
-	// ensuring that we are not sending to closed channel
 	s.sending.Lock()
 	defer s.sending.Unlock()
 
@@ -396,11 +453,38 @@ func (s *subscriber) Close() {
 	close(s.outputChannel)
 }
 
-func (s *subscriber) sendMessageToSubscriber(msg *message.Message, logFields watermill.LogFields) {
+// consumeFromChanPubSub consumes messages from ChanPubSub and handles Ack/Nack
+func (s *subscriber) consumeFromChanPubSub(ctx context.Context, g *GoChannel, topic string) {
+	bus := s.topicBus
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-g.closing:
+			return
+		case <-s.closing:
+			return
+		case msg, ok := <-bus.pubSub.C():
+			if !ok {
+				return
+			}
+
+			logFields := watermill.LogFields{"message_uuid": msg.UUID, "topic": topic}
+
+			// Handle Ack/Nack with retry
+			s.processMessageFromChanPubSub(msg, logFields)
+
+			// Signal to ChanPubSub that we're done - this unblocks the publisher
+			bus.pubSub.Wait()
+		}
+	}
+}
+
+// processMessageFromChanPubSub handles a message with Ack/Nack retry logic
+func (s *subscriber) processMessageFromChanPubSub(msg *message.Message, logFields watermill.LogFields) {
 	ctx := msg.Context()
 
-	// By default, the subscriber uses the context from the message and it's canceled right after it's processed.
-	// If the message's context is preserved, the top-level client is responsible for canceling it.
 	if !s.preserveContext {
 		var cancelCtx context.CancelFunc
 		ctx, cancelCtx = context.WithCancel(s.ctx)
@@ -409,8 +493,53 @@ func (s *subscriber) sendMessageToSubscriber(msg *message.Message, logFields wat
 
 SendToSubscriber:
 	for {
-		// copy the message to prevent ack/nack propagation to other consumers
-		// also allows to make retries on a fresh copy of the original message
+		msgToSend := msg.Copy()
+		msgToSend.SetContext(ctx)
+
+		s.logger.Trace("Sending msg to subscriber", logFields)
+
+		s.sending.Lock()
+		if s.closed {
+			s.logger.Info("Pub/Sub closed, discarding msg", logFields)
+			s.sending.Unlock()
+			return
+		}
+
+		select {
+		case s.outputChannel <- msgToSend:
+			s.logger.Trace("Sent message to subscriber", logFields)
+		case <-s.closing:
+			s.logger.Trace("Closing, message discarded", logFields)
+			s.sending.Unlock()
+			return
+		}
+		s.sending.Unlock()
+
+		select {
+		case <-msgToSend.Acked():
+			s.logger.Trace("Message acked", logFields)
+			return
+		case <-msgToSend.Nacked():
+			s.logger.Trace("Nack received, resending message", logFields)
+			continue SendToSubscriber
+		case <-s.closing:
+			s.logger.Trace("Closing, message discarded", logFields)
+			return
+		}
+	}
+}
+
+func (s *subscriber) sendMessageToSubscriber(msg *message.Message, logFields watermill.LogFields) {
+	ctx := msg.Context()
+
+	if !s.preserveContext {
+		var cancelCtx context.CancelFunc
+		ctx, cancelCtx = context.WithCancel(s.ctx)
+		defer cancelCtx()
+	}
+
+SendToSubscriber:
+	for {
 		msgToSend := msg.Copy()
 		msgToSend.SetContext(ctx)
 
