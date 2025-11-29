@@ -1,0 +1,23 @@
+goos: linux
+goarch: amd64
+pkg: test3
+cpu: AMD EPYC 7763 64-Core Processor                
+Benchmark_highContention-4   	       2	 661397742 ns/op	127792220 B/op	 1500276 allocs/op
+--- BENCH: Benchmark_highContention-4
+    bench_test.go:64: publishing 1 messages
+    bench_test.go:78: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:64: publishing 2 messages
+    bench_test.go:78: closing, received 300000 messages total across 150000 consumers
+Benchmark_highContention-4   	       2	 642235167 ns/op	127952828 B/op	 1500255 allocs/op
+--- BENCH: Benchmark_highContention-4
+    bench_test.go:64: publishing 1 messages
+    bench_test.go:78: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:64: publishing 2 messages
+    bench_test.go:78: closing, received 300000 messages total across 150000 consumers
+Benchmark_highContention-4   	       2	 651497942 ns/op	127785020 B/op	 1500201 allocs/op
+--- BENCH: Benchmark_highContention-4
+    bench_test.go:64: publishing 1 messages
+    bench_test.go:78: closing, received 150000 messages total across 150000 consumers
+    bench_test.go:64: publishing 2 messages
+    bench_test.go:78: closing, received 300000 messages total across 150000 consumers
+PASS

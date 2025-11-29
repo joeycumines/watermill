@@ -1,0 +1,8 @@
+goos: linux
+goarch: amd64
+pkg: test3
+cpu: AMD EPYC 7763 64-Core Processor                
+Benchmark_HighLoad_FanOut_Burst-4   	       1	2240851020 ns/op	  45.70 MB/s	1133718376 B/op	 9085402 allocs/op
+Benchmark_HighLoad_FanOut_Burst-4   	       1	1838935666 ns/op	  55.68 MB/s	932489736 B/op	 8600951 allocs/op
+Benchmark_HighLoad_FanOut_Burst-4   	       1	1998612015 ns/op	  51.24 MB/s	938084504 B/op	 8657918 allocs/op
+PASS
